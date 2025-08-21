@@ -1,0 +1,96 @@
+*oat.nvim* Custom operators for opening files and URLs
+
+==============================================================================
+CONTENTS                                                        *oat-contents*
+
+1. Introduction ............................ |oat-introduction|
+2. Setup ................................... |oat-setup|
+3. Usage ................................... |oat-usage|
+4. Configuration ........................... |oat-configuration|
+5. API ..................................... |oat-api|
+
+==============================================================================
+INTRODUCTION                                                *oat-introduction*
+
+oat.nvim provides custom operators for opening files and URLs with external
+applications. By default, it includes:
+
+- `go` - Open with system default application
+- `gg` - Open GitHub repository
+
+==============================================================================
+SETUP                                                              *oat-setup*
+
+Add to your init.lua:
+>
+    require('oat').setup()
+<
+
+Or with custom configuration:
+>
+    require('oat').setup({
+      prefix = "g",  -- Change prefix key (default: "g")
+      operators = {
+        o = {
+          name = "search",
+          command = function(text)
+            return "open https://www.google.com/search?q=" .. text
+          end,
+          description = "Search on Google"
+        },
+        g = {
+          name = "github", 
+          command = function(text)
+            return "open https://github.com/" .. text
+          end,
+          description = "Open GitHub repository"
+        }
+      }
+    })
+<
+
+==============================================================================
+USAGE                                                              *oat-usage*
+
+Default mappings:
+
+- `go{motion}` - Open text object with system default
+- `goo` - Open word under cursor with system default
+- `gg{motion}` - Open text object as GitHub repository
+- `ggg` - Open word under cursor as GitHub repository
+
+In visual mode:
+- `go` - Open selected text with system default
+- `gg` - Open selected text as GitHub repository
+
+==============================================================================
+CONFIGURATION                                              *oat-configuration*
+
+You can add custom operators:
+>
+    require('oat').add_operator('s', {
+      name = "search",
+      command = function(text)
+        return "open https://google.com/search?q=" .. text
+      end,
+      description = "Search on Google"
+    })
+<
+
+==============================================================================
+API                                                                  *oat-api*
+
+setup({opts})                                                   *oat.setup()*
+    Setup the plugin with optional configuration.
+
+add_operator({key}, {operator})                          *oat.add_operator()*
+    Add a new operator.
+    
+    Parameters: ~
+        {key}      (string) Single character key for the operator
+        {operator} (table)  Operator configuration
+
+list_operators()                                      *oat.list_operators()*
+    List all available operators.
+
+vim:tw=78:ts=8:ft=help:norl:
