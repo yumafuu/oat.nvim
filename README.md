@@ -122,5 +122,3 @@ require('oat').add_operator('f', {
 ## License
 
 MIT
-
-https://github.com/folke/flash.nvim/releases/tag/v2.1.0
