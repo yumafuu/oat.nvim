@@ -12,7 +12,7 @@ local builtin_operators = {
     command = function(text)
       -- Trim whitespace
       text = vim.trim(text)
-      
+
       -- Check if text is a URL (more comprehensive check)
       if text:match("^https?://") or text:match("^ftp://") or text:match("^file://") then
         -- Open URL directly
@@ -29,12 +29,12 @@ local builtin_operators = {
     end,
     description = "Open URL or search on Google"
   },
-  g = {
+  h = {
     name = "github",
     command = function(text)
       -- Trim whitespace
       text = vim.trim(text)
-      
+
       local url
       if text:match("^https://github%.com/") then
         -- Already a GitHub URL
@@ -56,18 +56,18 @@ local function get_visual_selection()
   local start_pos = vim.fn.getpos("'<")
   local end_pos = vim.fn.getpos("'>")
   local lines = vim.fn.getline(start_pos[2], end_pos[2])
-  
+
   if #lines == 0 then
     return ""
   end
-  
+
   if #lines == 1 then
     return string.sub(lines[1], start_pos[3], end_pos[3])
   end
-  
+
   lines[1] = string.sub(lines[1], start_pos[3])
   lines[#lines] = string.sub(lines[#lines], 1, end_pos[3])
-  
+
   return table.concat(lines, "\n")
 end
 
@@ -82,7 +82,7 @@ local function execute_operator(op_key, text)
     vim.notify("Unknown operator: " .. op_key, vim.log.levels.ERROR)
     return
   end
-  
+
   local function run_command(final_text)
     local command
     if type(operator.command) == "function" then
@@ -90,11 +90,11 @@ local function execute_operator(op_key, text)
     else
       command = operator.command .. " " .. vim.fn.shellescape(final_text)
     end
-    
+
     vim.fn.system(command)
     vim.notify("Executed: " .. command)
   end
-  
+
   -- Check if operator has interactive mode
   if operator.interactive then
     vim.ui.input({
@@ -128,17 +128,17 @@ end
 function M.operator_func(type)
   local op_key = vim.g.oat_current_operator
   local text = ""
-  
+
   print("DEBUG: operator_func called, type=" .. type .. ", op_key=" .. (op_key or "nil"))
-  
+
   if type == "char" then
     local start_line = vim.fn.line("'[")
     local start_col = vim.fn.col("'[")
     local end_line = vim.fn.line("']")
     local end_col = vim.fn.col("']")
-    
+
     print("DEBUG: char mode - start_line=" .. start_line .. ", start_col=" .. start_col .. ", end_line=" .. end_line .. ", end_col=" .. end_col)
-    
+
     if start_line == end_line then
       local line = vim.fn.getline(start_line)
       text = string.sub(line, start_col, end_col)
@@ -157,9 +157,9 @@ function M.operator_func(type)
     vim.notify("Block selection not supported", vim.log.levels.WARN)
     return
   end
-  
+
   print("DEBUG: extracted text='" .. text .. "'")
-  
+
   if text and text ~= "" then
     execute_operator(op_key, text)
   else
@@ -169,28 +169,28 @@ end
 
 function M.setup(opts)
   opts = opts or {}
-  
+
   if opts.prefix then
     config.prefix = opts.prefix
   end
-  
+
   if opts.operators then
     config.operators = vim.tbl_deep_extend("force", config.operators, opts.operators)
   end
-  
+
   -- Combine built-in and custom operators
   local all_operators = vim.tbl_deep_extend("force", builtin_operators, config.operators)
-  
+
   for op_key, operator in pairs(all_operators) do
     vim.keymap.set("n", config.prefix .. op_key, create_operator_mapping(op_key), { expr = true, desc = "Operator: " .. operator.description })
-    
+
     vim.keymap.set("v", config.prefix .. op_key, function()
       local text = get_visual_selection()
       if text and text ~= "" then
         execute_operator(op_key, text)
       end
     end, { desc = "Operator: " .. operator.description })
-    
+
     vim.keymap.set("n", config.prefix .. op_key .. op_key, function()
       local text = get_word_under_cursor()
       if text and text ~= "" then
@@ -198,7 +198,7 @@ function M.setup(opts)
       end
     end, { desc = "Operator on word: " .. operator.description })
   end
-  
+
   -- Add test mappings for debugging
   vim.keymap.set("n", "<leader>test-gow", function()
     print("Testing gow manually...")
@@ -206,7 +206,7 @@ function M.setup(opts)
     vim.o.operatorfunc = "v:lua.oat_operator_func"
     vim.cmd("normal! g@w")
   end, { desc = "Test gow manually" })
-  
+
   vim.keymap.set("n", "<leader>test-word", function()
     local word = get_word_under_cursor()
     print("Word under cursor: '" .. word .. "'")
@@ -216,16 +216,16 @@ end
 
 function M.add_operator(key, operator)
   config.operators[key] = operator
-  
+
   vim.keymap.set("n", config.prefix .. key, create_operator_mapping(key), { expr = true, desc = "Operator: " .. operator.description })
-  
+
   vim.keymap.set("v", config.prefix .. key, function()
     local text = get_visual_selection()
     if text and text ~= "" then
       execute_operator(key, text)
     end
   end, { desc = "Operator: " .. operator.description })
-  
+
   vim.keymap.set("n", config.prefix .. key .. key, function()
     local text = get_word_under_cursor()
     if text and text ~= "" then
@@ -239,8 +239,8 @@ function M.list_operators()
   for key, op in pairs(builtin_operators) do
     print("  " .. config.prefix .. key .. " - " .. op.description)
   end
-  
-  if next(config.operators) then
+
+ if next(config.operators) then
     print("Custom operators:")
     for key, op in pairs(config.operators) do
       print("  " .. config.prefix .. key .. " - " .. op.description)
