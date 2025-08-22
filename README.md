@@ -4,11 +4,12 @@ Custom operators for opening files and URLs in Neovim.
 
 ## Features
 
-- `go{motion}` - Search text on Google
-- `gg{motion}` - Open text as GitHub repository
+- `go{motion}` - Open URL directly or search text on Google
+- `gg{motion}` - Open GitHub repository or search repositories
 - `goo` / `ggg` - Operate on word under cursor
 - Visual mode support
 - Fully customizable operators
+- Built-in smart URL detection
 
 ## Installation
 
@@ -34,10 +35,14 @@ use {
 
 ## Usage
 
-- `go{motion}` - Search text object on Google (e.g., `goiw` for word, `go$` for line end)
-- `goo` - Search word under cursor on Google
-- `gg{motion}` - Open as GitHub repo (e.g., `ggiw` for word)
-- `ggg` - Open word under cursor as GitHub repo
+- `go{motion}` - Open URL directly or search on Google (e.g., `goiw` for word, `go$` for line end)
+- `goo` - Open URL or search word under cursor on Google
+- `gg{motion}` - Open GitHub repo or search (e.g., `ggiw` for word)
+- `ggg` - Open GitHub repo or search word under cursor
+
+**Smart URL Detection:**
+- URLs (http/https) are opened directly
+- Other text is searched on Google/GitHub
 
 In visual mode, just use `go` or `gg` on selected text.
 
@@ -117,3 +122,5 @@ require('oat').add_operator('f', {
 ## License
 
 MIT
+
+https://github.com/folke/flash.nvim/releases/tag/v2.1.0

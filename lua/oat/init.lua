@@ -2,24 +2,53 @@ local M = {}
 
 local config = {
   prefix = "g",
-  operators = {
-    o = {
-      name = "search",
-      command = function(text)
+  operators = {}
+}
+
+-- Built-in operators
+local builtin_operators = {
+  o = {
+    name = "open",
+    command = function(text)
+      -- Trim whitespace
+      text = vim.trim(text)
+      
+      -- Check if text is a URL (more comprehensive check)
+      if text:match("^https?://") or text:match("^ftp://") or text:match("^file://") then
+        -- Open URL directly
+        return "open " .. vim.fn.shellescape(text)
+      elseif text:match("^www%.") then
+        -- Add https:// to www. URLs
+        return "open " .. vim.fn.shellescape("https://" .. text)
+      else
+        -- Search on Google
         local encoded_text = vim.fn.substitute(text, ' ', '+', 'g')
         local url = "https://www.google.com/search?q=" .. encoded_text
         return "open " .. vim.fn.shellescape(url)
-      end,
-      description = "Search on Google"
-    },
-    g = {
-      name = "github",
-      command = function(text)
-        local url = "https://github.com/" .. text
-        return "open " .. vim.fn.shellescape(url)
-      end,
-      description = "Open GitHub repository"
-    }
+      end
+    end,
+    description = "Open URL or search on Google"
+  },
+  g = {
+    name = "github",
+    command = function(text)
+      -- Trim whitespace
+      text = vim.trim(text)
+      
+      local url
+      if text:match("^https://github%.com/") then
+        -- Already a GitHub URL
+        url = text
+      elseif text:match("^[%w%-_%.]+/[%w%-_%.]+$") then
+        -- org/repo format
+        url = "https://github.com/" .. text
+      else
+        -- Search repositories
+        url = "https://github.com/search?q=" .. vim.fn.substitute(text, ' ', '+', 'g') .. "&type=repositories"
+      end
+      return "open " .. vim.fn.shellescape(url)
+    end,
+    description = "Open GitHub repository or search"
   }
 }
 
@@ -43,11 +72,12 @@ local function get_visual_selection()
 end
 
 local function get_word_under_cursor()
-  return vim.fn.expand("<cword>")
+  return vim.fn.expand("<cWORD>")  -- Use <cWORD> instead of <cword> to include URLs
 end
 
 local function execute_operator(op_key, text)
-  local operator = config.operators[op_key]
+  -- Check built-in operators first
+  local operator = builtin_operators[op_key] or config.operators[op_key]
   if not operator then
     vim.notify("Unknown operator: " .. op_key, vim.log.levels.ERROR)
     return
@@ -148,22 +178,25 @@ function M.setup(opts)
     config.operators = vim.tbl_deep_extend("force", config.operators, opts.operators)
   end
   
-  for op_key, _ in pairs(config.operators) do
-    vim.keymap.set("n", config.prefix .. op_key, create_operator_mapping(op_key), { expr = true, desc = "Operator: " .. config.operators[op_key].description })
+  -- Combine built-in and custom operators
+  local all_operators = vim.tbl_deep_extend("force", builtin_operators, config.operators)
+  
+  for op_key, operator in pairs(all_operators) do
+    vim.keymap.set("n", config.prefix .. op_key, create_operator_mapping(op_key), { expr = true, desc = "Operator: " .. operator.description })
     
     vim.keymap.set("v", config.prefix .. op_key, function()
       local text = get_visual_selection()
       if text and text ~= "" then
         execute_operator(op_key, text)
       end
-    end, { desc = "Operator: " .. config.operators[op_key].description })
+    end, { desc = "Operator: " .. operator.description })
     
     vim.keymap.set("n", config.prefix .. op_key .. op_key, function()
       local text = get_word_under_cursor()
       if text and text ~= "" then
         execute_operator(op_key, text)
       end
-    end, { desc = "Operator on word: " .. config.operators[op_key].description })
+    end, { desc = "Operator on word: " .. operator.description })
   end
   
   -- Add test mappings for debugging
@@ -202,8 +235,16 @@ function M.add_operator(key, operator)
 end
 
 function M.list_operators()
-  for key, op in pairs(config.operators) do
-    print(config.prefix .. key .. " - " .. op.description)
+  print("Built-in operators:")
+  for key, op in pairs(builtin_operators) do
+    print("  " .. config.prefix .. key .. " - " .. op.description)
+  end
+  
+  if next(config.operators) then
+    print("Custom operators:")
+    for key, op in pairs(config.operators) do
+      print("  " .. config.prefix .. key .. " - " .. op.description)
+    end
   end
 end
 

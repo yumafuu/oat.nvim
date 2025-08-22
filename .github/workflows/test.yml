@@ -1,0 +1,77 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        nvim_version: ['stable', 'nightly', 'v0.9.0']
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: ${{ matrix.nvim_version }}
+      
+      - name: Install dependencies
+        run: |
+          git clone --depth 1 https://github.com/nvim-lua/plenary.nvim ~/.local/share/nvim/site/pack/vendor/start/plenary.nvim
+          git clone --depth 1 https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+      
+      - name: Run tests
+        run: |
+          nvim --version
+          nvim --headless -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/minimal_init.lua'}" -c "qa!"
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: "5.1"
+      
+      - name: Setup Luarocks
+        uses: leafo/gh-actions-luarocks@v4
+      
+      - name: Install luacheck
+        run: luarocks install luacheck
+      
+      - name: Run luacheck
+        run: luacheck lua/ --globals vim
+
+  format:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: "5.1"
+      
+      - name: Setup Luarocks
+        uses: leafo/gh-actions-luarocks@v4
+      
+      - name: Install stylua
+        run: |
+          wget -O stylua.zip https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux.zip
+          unzip stylua.zip
+          chmod +x stylua
+          sudo mv stylua /usr/local/bin/
+      
+      - name: Check formatting
+        run: stylua --check lua/ tests/
